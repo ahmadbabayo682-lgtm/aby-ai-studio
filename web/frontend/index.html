@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10131a">
+  <title>ABY_GW AI Studio</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div class="navigation-backdrop" data-navigation-close></div>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="drawer-header">
+        <div class="brand">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <div>
+          <strong>ABY_GW</strong>
+          <span>AI Studio</span>
+        </div>
+        </div>
+        <button class="drawer-close" type="button" aria-label="Close navigation" data-navigation-close>×</button>
+      </div>
+
+      <nav class="navigation">
+        <p class="nav-label" data-i18n="workspace">AI Workspace</p>
+        <button class="nav-item active" type="button" data-view="home" aria-current="page">
+          <span class="nav-icon" aria-hidden="true">⌂</span>
+          <span data-i18n="home">Home</span>
+        </button>
+        <button class="nav-item" type="button" data-view="image">
+          <span class="nav-icon" aria-hidden="true">✦</span>
+          <span data-i18n="imageGeneration">Image Generation</span>
+        </button>
+        <button class="nav-item" type="button" data-view="video">
+          <span class="nav-icon" aria-hidden="true">▶</span>
+          <span data-i18n="videoGeneration">Video Generation</span>
+        </button>
+        <button class="nav-item" type="button" data-view="voice">
+          <span class="nav-icon" aria-hidden="true">◉</span>
+          <span data-i18n="voiceGeneration">Voice Generation</span>
+        </button>
+
+        <div class="nav-group" data-nav-group>
+          <button class="nav-group-toggle" type="button" aria-expanded="true">
+            <span data-i18n="videoServices">Video Services</span>
+            <span class="nav-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item nav-subitem" type="button" data-view="video-cutter">
+              <span class="nav-icon" aria-hidden="true">✂</span>
+              <span data-i18n="videoCutter">Video Cutter</span>
+            </button>
+            <button class="nav-item nav-subitem" type="button" data-view="video-merger">
+              <span class="nav-icon" aria-hidden="true">▣</span>
+              <span data-i18n="videoMerger">Video Merger</span>
+            </button>
+            <button class="nav-item nav-subitem" type="button" data-view="video-editing">
+              <span class="nav-icon" aria-hidden="true">✎</span>
+              <span data-i18n="videoEditing">Video Editing</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-group" data-nav-group>
+          <button class="nav-group-toggle" type="button" aria-expanded="true">
+            <span data-i18n="audioServices">Audio Services</span>
+            <span class="nav-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-item nav-subitem" type="button" data-view="audio-cutter">
+              <span class="nav-icon" aria-hidden="true">✂</span>
+              <span data-i18n="audioCutter">Audio Cutter</span>
+            </button>
+            <button class="nav-item nav-subitem" type="button" data-view="audio-merger">
+              <span class="nav-icon" aria-hidden="true">▣</span>
+              <span data-i18n="audioMerger">Audio Merger</span>
+            </button>
+          </div>
+        </div>
+
+        <p class="nav-label secondary-label" data-i18n="projects">Projects</p>
+        <button class="nav-item" type="button" data-view="projects">
+          <span class="nav-icon" aria-hidden="true">▣</span>
+          <span data-i18n="myProjects">My Projects</span>
+        </button>
+        <p class="nav-label secondary-label settings-label" data-i18n="settings">Settings</p>
+        <button class="nav-item" type="button" data-view="settings">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          <span data-i18n="settings">Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span data-i18n="studioOnline">Studio online</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">☰</button>
+        <span class="topbar-kicker" data-i18n="creativeWorkspace">CREATIVE WORKSPACE</span>
+        <span class="topbar-status" data-i18n="webVersion">Web version</span>
+      </header>
+      <section id="app-view" class="app-view" aria-live="polite"></section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
