@@ -1,15 +1,20 @@
+import base64
+import binascii
+import hmac
 import os
-import shutil
 import subprocess
 import tempfile
+import threading
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 import imageio_ffmpeg
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from elevenlabs.client import ElevenLabs
 from magic_hour import Client
@@ -25,6 +30,56 @@ IMAGE_GENERATION_URL = os.getenv(
 )
 
 app = FastAPI(title="ABY_GW AI Studio Web")
+
+
+@app.middleware("http")
+async def protect_expensive_endpoints(request: Request, call_next):
+    if request.url.path not in PROTECTED_PATHS:
+        return await call_next(request)
+
+    configured_password = os.getenv("ABY_ACCESS_PASSWORD")
+    if not configured_password:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Server access protection is not configured."},
+        )
+
+    authorization = request.headers.get("authorization", "")
+    if not _valid_basic_auth(authorization, configured_password):
+        return JSONResponse(
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="ABY_GW AI Studio"'},
+            content={"detail": "Authentication is required."},
+        )
+
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    with rate_limit_lock:
+        request_times = rate_limit_requests[client_ip]
+        while request_times and now - request_times[0] >= RATE_LIMIT_WINDOW_SECONDS:
+            request_times.popleft()
+        if len(request_times) >= RATE_LIMIT_REQUESTS:
+            return JSONResponse(
+                status_code=429,
+                headers={"Retry-After": str(RATE_LIMIT_WINDOW_SECONDS)},
+                content={"detail": "Too many expensive requests. Please try again later."},
+            )
+        request_times.append(now)
+
+    return await call_next(request)
+
+
+def _valid_basic_auth(authorization: str, configured_password: str) -> bool:
+    if not authorization.lower().startswith("basic "):
+        return False
+    try:
+        credentials = base64.b64decode(authorization[6:], validate=True).decode("utf-8")
+        username, password = credentials.split(":", 1)
+    except (binascii.Error, UnicodeDecodeError, ValueError):
+        return False
+    return hmac.compare_digest(username, "aby") and hmac.compare_digest(
+        password, configured_password
+    )
 
 
 class ImageGenerationRequest(BaseModel):
@@ -46,6 +101,21 @@ VOICE_IDS = {
     "Narrator": "7Hn1AO6hARVHK68uFK9N",
 }
 MEDIA_TIME_LIMIT = 24 * 60 * 60
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_REQUESTS = 5
+PROTECTED_PATHS = {
+    "/api/images/generate",
+    "/api/videos/generate",
+    "/api/voices/generate",
+    "/api/services/video/cut",
+    "/api/services/video/merge",
+    "/api/services/video/edit",
+    "/api/services/audio/cut",
+    "/api/services/audio/merge",
+}
+rate_limit_requests = defaultdict(deque)
+rate_limit_lock = threading.Lock()
 
 
 @app.get("/api/health")
@@ -340,17 +410,32 @@ def merge_audio(audio: list[UploadFile] = File(...)):
 def _save_upload(upload: UploadFile, directory: str) -> str:
     suffix = Path(upload.filename or "upload").suffix
     destination = Path(directory) / f"asset{suffix}"
-    with destination.open("wb") as file:
-        shutil.copyfileobj(upload.file, file)
+    _copy_limited_upload(upload, destination)
     return str(destination)
 
 
 def _save_service_upload(upload: UploadFile, directory: Path, name: str) -> Path:
     suffix = Path(upload.filename or "upload").suffix or ".bin"
     destination = directory / f"{name}{suffix}"
-    with destination.open("wb") as file:
-        shutil.copyfileobj(upload.file, file)
+    _copy_limited_upload(upload, destination)
     return destination
+
+
+def _copy_limited_upload(upload: UploadFile, destination: Path) -> None:
+    total_bytes = 0
+    try:
+        with destination.open("wb") as file:
+            while chunk := upload.file.read(1024 * 1024):
+                total_bytes += len(chunk)
+                if total_bytes > MAX_UPLOAD_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Uploaded media must be 100 MB or smaller.",
+                    )
+                file.write(chunk)
+    except HTTPException:
+        destination.unlink(missing_ok=True)
+        raise
 
 
 def _validate_time_range(start_time: float, end_time: float) -> None:
