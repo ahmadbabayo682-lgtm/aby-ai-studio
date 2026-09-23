@@ -1,7 +1,5 @@
-customtkinter==6.0.0
 python-dotenv==1.2.3
 requests==2.34.2
-pillow==12.3.0
 imageio-ffmpeg
 elevenlabs==2.66.0
 magic_hour==0.80.0
