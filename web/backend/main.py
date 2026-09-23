@@ -30,6 +30,8 @@ IMAGE_GENERATION_URL = os.getenv(
 )
 
 app = FastAPI(title="ABY_GW AI Studio Web")
+BASIC_AUTH_USERNAME = "aby"
+BASIC_AUTH_REALM = "ABY_GW AI Studio"
 
 
 @app.middleware("http")
@@ -48,7 +50,9 @@ async def protect_expensive_endpoints(request: Request, call_next):
     if not _valid_basic_auth(authorization, configured_password):
         return JSONResponse(
             status_code=401,
-            headers={"WWW-Authenticate": 'Basic realm="ABY_GW AI Studio"'},
+            headers={
+                "WWW-Authenticate": f'Basic realm="{BASIC_AUTH_REALM}", charset="UTF-8"'
+            },
             content={"detail": "Authentication is required."},
         )
 
@@ -77,7 +81,7 @@ def _valid_basic_auth(authorization: str, configured_password: str) -> bool:
         username, password = credentials.split(":", 1)
     except (binascii.Error, UnicodeDecodeError, ValueError):
         return False
-    return hmac.compare_digest(username, "aby") and hmac.compare_digest(
+    return hmac.compare_digest(username, BASIC_AUTH_USERNAME) and hmac.compare_digest(
         password, configured_password
     )
 
