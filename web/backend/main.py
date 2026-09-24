@@ -41,10 +41,7 @@ async def protect_expensive_endpoints(request: Request, call_next):
 
     configured_password = os.getenv("ABY_ACCESS_PASSWORD")
     if not configured_password:
-        return JSONResponse(
-            status_code=503,
-            content={"detail": "Server access protection is not configured."},
-        )
+        return await call_next(request)
 
     authorization = request.headers.get("authorization", "")
     if not _valid_basic_auth(authorization, configured_password):
