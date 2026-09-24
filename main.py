@@ -9,6 +9,7 @@ from tkinter import filedialog
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
 from magic_hour import Client
+from prompt_enhancer import enhance_prompt
 load_dotenv()
 elevenlabs = ElevenLabs(
     api_key=os.getenv("ELEVENLABS_API_KEY")
@@ -216,11 +217,12 @@ def open_image_page():
             if not prompt: 
                 preview_label.configure(text="Please describe the image first.")
                 return
+            enhanced_prompt = enhance_prompt(prompt)
             preview_label.configure(text="Generating image... Please wait.")
             url = "https://aby-ai-image.ahmadbabayo682.workers.dev/"
             response = requests.get(
                 url,
-                params={"prompt": prompt},
+                params={"prompt": enhanced_prompt},
                 timeout=60
             )
             response.raise_for_status()
@@ -1519,3 +1521,5 @@ settings_button.pack(
 
 open_home_page()
 app.mainloop()
+
+#  .\venv\Scripts\python.exe -m uvicorn web.backend.main:app --reload

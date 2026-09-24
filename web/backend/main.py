@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from elevenlabs.client import ElevenLabs
 from magic_hour import Client
+from prompt_enhancer import enhance_prompt
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -129,11 +130,12 @@ def generate_image(request: ImageGenerationRequest):
     prompt = request.prompt.strip()
     if not prompt:
         raise HTTPException(status_code=400, detail="Please describe the image first.")
+    enhanced_prompt = enhance_prompt(prompt)
 
     try:
         image_response = requests.get(
             IMAGE_GENERATION_URL,
-            params={"prompt": prompt},
+            params={"prompt": enhanced_prompt},
             timeout=60,
         )
         image_response.raise_for_status()
